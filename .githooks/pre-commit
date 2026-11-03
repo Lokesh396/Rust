@@ -1,0 +1,19 @@
+#!/bin/sh
+# This repo must stay a SINGLE git repository.
+# A nested `.git` directory makes git treat that folder as a separate, untracked
+# repo (which is exactly how hello_cargo/guessing_game got stranded).
+# Plain `cargo new` / `cargo init` does the right thing inside an existing repo;
+# only an explicit `--vcs git` creates the nested .git this hook catches.
+
+nested=$(find . -mindepth 2 -maxdepth 5 -name .git -not -path "./.git/*" 2>/dev/null | head -n 10)
+
+if [ -n "$nested" ]; then
+  echo "pre-commit: nested git repo(s) found - this tree must stay one repository:" >&2
+  echo "$nested" | sed 's/^/  /' >&2
+  echo "" >&2
+  echo "Fix: rm -rf <path>/.git   (only the git metadata is removed; the files stay here" >&2
+  echo "      and get tracked by this repo), then re-run the commit." >&2
+  exit 1
+fi
+
+exit 0
